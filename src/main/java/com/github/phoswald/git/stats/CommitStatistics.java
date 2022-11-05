@@ -1,8 +1,8 @@
 package com.github.phoswald.git.stats;
 
-import lombok.Builder;
+import com.github.phoswald.record.builder.RecordBuilder;
 
-@Builder
+@RecordBuilder
 public record CommitStatistics( //
         CommitInfo info, //
         int fileCount, //

@@ -21,9 +21,9 @@
   <dependencies>
     <!-- Provided -->
     <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <version>1.18.24</version>
+      <groupId>com.github.phoswald</groupId>
+      <artifactId>record-builder</artifactId>
+      <version>0.1.0</version>
       <scope>provided</scope>
     </dependency>
     

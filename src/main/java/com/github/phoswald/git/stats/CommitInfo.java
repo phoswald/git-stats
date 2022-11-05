@@ -2,9 +2,9 @@ package com.github.phoswald.git.stats;
 
 import java.time.Instant;
 
-import lombok.Builder;
+import com.github.phoswald.record.builder.RecordBuilder;
 
-@Builder
+@RecordBuilder
 public record CommitInfo( //
         String commitHash, //
         Instant commitTimestamp, //

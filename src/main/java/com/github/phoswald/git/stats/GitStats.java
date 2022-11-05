@@ -31,8 +31,8 @@ public class GitStats {
             ObjectId objId = repo.resolve(revision);
             try (RevWalk walk = new RevWalk(repo)) {
                 RevCommit commit = walk.parseCommit(objId);
-                return CommitStatistics.builder() //
-                        .info(CommitInfo.builder() //
+                return new CommitStatisticsBuilder() //
+                        .info(new CommitInfoBuilder() //
                                 .commitHash(objId.getName()) //
                                 .commitTimestamp(Instant.ofEpochSecond(commit.getCommitTime())) //
                                 .commitAuthorName(commit.getAuthorIdent().getName()) //
