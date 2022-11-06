@@ -4,7 +4,10 @@ import com.github.phoswald.record.builder.RecordBuilder;
 
 @RecordBuilder
 public record CommitStatistics( //
-        CommitInfo info, //
+        String repo, //
+        String revision, //
+        CommitInfo commit, //
         int fileCount, //
-        int lineCount) {
+        int lineCount //
+) {
 }

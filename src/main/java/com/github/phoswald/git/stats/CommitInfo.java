@@ -6,9 +6,9 @@ import com.github.phoswald.record.builder.RecordBuilder;
 
 @RecordBuilder
 public record CommitInfo( //
-        String commitHash, //
-        Instant commitTimestamp, //
-        String commitAuthorName, //
-        String commitAuthorEmail, //
-        String commitMessage) {
+        String hash, //
+        Instant timestamp, //
+        User author, //
+        String message //
+) {
 }
