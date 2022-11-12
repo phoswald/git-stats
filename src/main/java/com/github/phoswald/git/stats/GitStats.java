@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.blame.BlameGenerator;
@@ -79,16 +78,16 @@ public class GitStats implements AutoCloseable {
             Map<String, CommitLines> commits = new LinkedHashMap<>();
             for (int line = 0; line < lineCount; line++) {
                 RevCommit commit = blameResult.getSourceCommit(line);
-                commits.computeIfAbsent(commit.getName(), k -> createCommitLines(commit)).incLineCount();
+                commits.computeIfAbsent(commit.getName(), k -> new CommitLines(commit)).lineCount++;
             }
 
             // aggregate line counts by users and timestamps
             SortedMap<User, Integer> lineCountByAuthor = new TreeMap<>(Comparator.comparing(User::toString));
             SortedMap<Instant, Integer> lineCountByTimestamp = new TreeMap<>();
             for (var entry : commits.values()) {
-                logger.debug("CommitLines: hash={}, lineCount={}", entry.commit().hash(), entry.lineCount());
-                lineCountByAuthor.compute(entry.commit().author(), (k, v) -> entry.sumLineCount(v));
-                lineCountByTimestamp.compute(entry.commit().timestamp(), (k, v) -> entry.sumLineCount(v));
+                logger.debug("CommitLines: hash={}, lineCount={}", entry.commit.hash(), entry.lineCount);
+                lineCountByAuthor.compute(entry.commit.author(), (k, v) -> entry.addLineCount(v));
+                lineCountByTimestamp.compute(entry.commit.timestamp(), (k, v) -> entry.addLineCount(v));
             }
             return new BlameStatisticsBuilder() //
                     .repo(repoPath.toString()) //
@@ -113,18 +112,16 @@ public class GitStats implements AutoCloseable {
                 .build();
     }
 
-    private static CommitLines createCommitLines(RevCommit commit) {
-        return new CommitLines(createCommitInfo(commit), new AtomicInteger());
-    }
+    private static class CommitLines {
+        private final CommitInfo commit;
+        private int lineCount;
 
-    private record CommitLines(CommitInfo commit, AtomicInteger lineCount) {
-
-        void incLineCount() {
-            lineCount.incrementAndGet();
+        CommitLines(RevCommit commit) {
+            this.commit = createCommitInfo(commit);
         }
 
-        Integer sumLineCount(Integer sum) {
-            return Integer.valueOf((sum == null ? 0 : sum.intValue()) + lineCount.intValue());
+        Integer addLineCount(Integer v) {
+            return Integer.valueOf((v == null ? 0 : v.intValue()) + lineCount);
         }
     }
 }
