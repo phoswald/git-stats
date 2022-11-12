@@ -33,6 +33,17 @@
       <artifactId>org.eclipse.jgit</artifactId>
       <version>6.3.0.202209071007-r</version>
     </dependency>
+    <dependency>
+      <groupId>jakarta.json.bind</groupId>
+      <artifactId>jakarta.json.bind-api</artifactId>
+      <version>3.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse</groupId>
+      <artifactId>yasson</artifactId>
+      <version>3.0.2</version>
+      <scope>runtime</scope>
+    </dependency>
 
     <!-- Testing -->
     <dependency>

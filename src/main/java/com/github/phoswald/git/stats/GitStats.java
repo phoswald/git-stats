@@ -1,8 +1,14 @@
 package com.github.phoswald.git.stats;
 
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.StreamSupport.stream;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -23,17 +29,21 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.phoswald.git.reports.ReportGenerator;
+
 public class GitStats implements AutoCloseable {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Git git;
     private final Repository repo;
     private final Path repoPath;
+    private final ReportGenerator reportGenerator;
 
-    public GitStats(Path repoPath) throws IOException {
+    public GitStats(Path repoPath, Path outputPath) throws IOException {
         this.git = Git.open(repoPath.toFile());
         this.repo = git.getRepository();
         this.repoPath = repoPath;
+        this.reportGenerator = new ReportGenerator(outputPath);
     }
 
     @Override
@@ -82,12 +92,12 @@ public class GitStats implements AutoCloseable {
             }
 
             // aggregate line counts by users and timestamps
-            SortedMap<User, Integer> lineCountByAuthor = new TreeMap<>(Comparator.comparing(User::toString));
-            SortedMap<Instant, Integer> lineCountByTimestamp = new TreeMap<>();
+            SortedMap<User, Long> lineCountByAuthor = new TreeMap<>(comparing(User::toString));
+            SortedMap<LocalDate, Long> lineCountByDate = new TreeMap<>();
             for (var entry : commits.values()) {
                 logger.debug("CommitLines: hash={}, lineCount={}", entry.commit.hash(), entry.lineCount);
                 lineCountByAuthor.compute(entry.commit.author(), (k, v) -> entry.addLineCount(v));
-                lineCountByTimestamp.compute(entry.commit.timestamp(), (k, v) -> entry.addLineCount(v));
+                lineCountByDate.compute(entry.commit.date(), (k, v) -> entry.addLineCount(v));
             }
             return new BlameStatisticsBuilder() //
                     .repo(repoPath.toString()) //
@@ -95,7 +105,7 @@ public class GitStats implements AutoCloseable {
                     .file(file.toString()) //
                     .lineCount(lineCount) //
                     .lineCountByAuthor(lineCountByAuthor) //
-                    .lineCountByTimestamp(lineCountByTimestamp) //
+                    .lineCountByDate(lineCountByDate) //
                     .build();
         }
     }
@@ -112,6 +122,42 @@ public class GitStats implements AutoCloseable {
                 .build();
     }
 
+    public HistoryStatistics calculateHistoryStatistics(String revision) throws IOException {
+        ObjectId objId = repo.resolve(revision);
+        try (RevWalk walk = new RevWalk(repo)) {
+            walk.markStart(walk.parseCommit(objId));
+            List<CommitInfo> commits = stream(walk.spliterator(), false) //
+                    .map(commit -> createCommitInfo(commit)) //
+                    .sorted(comparing(CommitInfo::timestamp)) //
+                    .toList();
+            return new HistoryStatisticsBuilder() //
+                    .commitCount(commits.size()) //
+                    .commitCountByAuthor(sortMap(commits.stream() //
+                            .collect(groupingBy(CommitInfo::author, counting())), comparing(User::toString))) //
+                    .commitCountByDate(sortMap(commits.stream() //
+                            .collect(groupingBy(CommitInfo::date, counting())))) //
+                    .commits(commits) //
+                    .build();
+        }
+    }
+
+    public List<Path> generateReport(HistoryStatistics stats) throws IOException {
+        List<Path> reports = new ArrayList<>();
+        reports.addAll(reportGenerator.generateCountByAuthorChart(stats.commitCountByAuthor()));
+        reports.addAll(reportGenerator.generateCountByDateChart(stats.commitCountByDate()));
+        return reports;
+    }
+
+    private <K, V> SortedMap<K, V> sortMap(Map<K, V> map) {
+        return sortMap(map, null);
+    }
+
+    private <K, V> SortedMap<K, V> sortMap(Map<K, V> map, Comparator<? super K> comparator) {
+        var tree = new TreeMap<K, V>(comparator);
+        tree.putAll(map);
+        return tree;
+    }
+
     private static class CommitLines {
         private final CommitInfo commit;
         private int lineCount;
@@ -120,8 +166,8 @@ public class GitStats implements AutoCloseable {
             this.commit = createCommitInfo(commit);
         }
 
-        Integer addLineCount(Integer v) {
-            return Integer.valueOf((v == null ? 0 : v.intValue()) + lineCount);
+        Long addLineCount(Long v) {
+            return Long.valueOf((v == null ? 0 : v.intValue()) + lineCount);
         }
     }
 }

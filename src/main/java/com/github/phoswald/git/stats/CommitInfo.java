@@ -1,6 +1,8 @@
 package com.github.phoswald.git.stats;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 import com.github.phoswald.record.builder.RecordBuilder;
 
@@ -11,4 +13,7 @@ public record CommitInfo( //
         User author, //
         String message //
 ) {
+    public LocalDate date() {
+        return timestamp.atZone(ZoneOffset.UTC).toLocalDate();
+    }
 }
