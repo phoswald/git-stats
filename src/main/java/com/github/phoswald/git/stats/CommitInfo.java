@@ -13,7 +13,16 @@ public record CommitInfo( //
         User author, //
         String message //
 ) {
+
     public LocalDate date() {
         return timestamp.atZone(ZoneOffset.UTC).toLocalDate();
+    }
+
+    public String year() {
+        return date().toString().substring(0, 4);
+    }
+
+    public String month() {
+        return date().toString().substring(0, 7);
     }
 }

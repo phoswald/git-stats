@@ -30,7 +30,6 @@ class GitStatsTest {
     @AfterEach
     void close() {
         testee.close();
-        ;
     }
 
     @Test
@@ -92,8 +91,8 @@ class GitStatsTest {
         assertThat(stats.commitCountByDate().values().stream().collect(toSum()), equalTo(5752));
         assertThat(stats.commits().size(), equalTo(5752));
 
-        List<Path> files = testee.generateReport(stats);
-        assertValidCharts(files, 4);
+        List<Path> files = testee.generateHistoryReport(stats);
+        assertValidCharts(files, 6);
     }
 
     private void assertValidCharts(List<Path> files, int count) throws IOException {

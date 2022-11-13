@@ -141,11 +141,8 @@ public class GitStats implements AutoCloseable {
         }
     }
 
-    public List<Path> generateReport(HistoryStatistics stats) throws IOException {
-        List<Path> reports = new ArrayList<>();
-        reports.addAll(reportGenerator.generateCountByAuthorChart(stats.commitCountByAuthor()));
-        reports.addAll(reportGenerator.generateCountByDateChart(stats.commitCountByDate()));
-        return reports;
+    public List<Path> generateHistoryReport(HistoryStatistics stats) throws IOException {
+        return reportGenerator.generateHistoryReport(stats.commits());
     }
 
     private <K, V> SortedMap<K, V> sortMap(Map<K, V> map) {

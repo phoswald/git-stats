@@ -1,13 +1,16 @@
 package com.github.phoswald.git.stats.charts;
 
+import static com.github.phoswald.git.reports.Dataset.dataset;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
-import com.github.phoswald.git.reports.Point;
-import com.github.phoswald.git.reports.Series;
+import com.github.phoswald.git.reports.Dataset;
+import com.github.phoswald.git.reports.Sample;
+import com.github.phoswald.git.reports.Sequence;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
@@ -24,11 +27,11 @@ public class ChartGenerator {
         this.targetDir = targetDir;
     }
 
-    public Path generatePieChart(String name, List<Point> points) throws IOException {
+    public Path generatePieChart(String name, Sequence sequence) throws IOException {
         PlotlyTrace trace = new PlotlyTraceBuilder() //
                 .type("pie") //
-                .labels(points.stream().map(Point::x).toList()) //
-                .values(points.stream().map(Point::ys).toList()) //
+                .labels(sequence.samples().stream().map(Sample::label).toList()) //
+                .values(sequence.samples().stream().map(Sample::valueAsStr).toList()) //
                 .build();
         PlotlyLayout layout = new PlotlyLayoutBuilder() //
                 .title(name) //
@@ -38,17 +41,17 @@ public class ChartGenerator {
         return generatePlotlyChart(name, Arrays.asList(trace), layout);
     }
 
-    public Path generateBarChart(String name, List<Point> points) throws IOException {
-        return generateBarsChart(name, Arrays.asList(new Series(null, points)));
+    public Path generateBarChart(String name, Sequence sequence) throws IOException {
+        return generateBarsChart(name, dataset(null, sequence));
     }
 
-    public Path generateBarsChart(String name, List<Series> serieses) throws IOException {
-        List<PlotlyTrace> traces = serieses.stream() //
-                .map(series -> new PlotlyTraceBuilder() //
+    public Path generateBarsChart(String name, Dataset dataset) throws IOException {
+        List<PlotlyTrace> traces = dataset.sequences().stream() //
+                .map(sequence -> new PlotlyTraceBuilder() //
                         .type("bar") //
-                        .name(series.name()) //
-                        .x(series.points().stream().map(Point::x).toList()) //
-                        .y(series.points().stream().map(Point::ys).toList()) //
+                        .name(sequence.label()) //
+                        .x(sequence.samples().stream().map(Sample::label).toList()) //
+                        .y(sequence.samples().stream().map(Sample::valueAsStr).toList()) //
                         .build())
                 .toList();
         PlotlyLayout layout = new PlotlyLayoutBuilder() //
@@ -59,17 +62,17 @@ public class ChartGenerator {
         return generatePlotlyChart(name, traces, layout);
     }
 
-    public Path generateLineChart(String name, List<Point> points) throws IOException {
-        return generateLinesChart(name, Arrays.asList(new Series(null, points)));
+    public Path generateLineChart(String name, Sequence sequence) throws IOException {
+        return generateLinesChart(name, dataset(null, sequence));
     }
 
-    public Path generateLinesChart(String name, List<Series> serieses) throws IOException {
-        List<PlotlyTrace> traces = serieses.stream() //
-                .map(series -> new PlotlyTraceBuilder() //
+    public Path generateLinesChart(String name, Dataset dataset) throws IOException {
+        List<PlotlyTrace> traces = dataset.sequences().stream() //
+                .map(sequence -> new PlotlyTraceBuilder() //
                         .type("scatter") //
-                        .name(series.name()) //
-                        .x(series.points().stream().map(Point::x).toList()) //
-                        .y(series.points().stream().map(Point::ys).toList()) //
+                        .name(sequence.label()) //
+                        .x(sequence.samples().stream().map(Sample::label).toList()) //
+                        .y(sequence.samples().stream().map(Sample::valueAsStr).toList()) //
                         .build())
                 .toList();
         PlotlyLayout layout = new PlotlyLayoutBuilder() //
